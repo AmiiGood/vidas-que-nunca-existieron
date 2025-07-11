@@ -1,0 +1,97 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Persona {
+  id            String    @id @default(cuid())
+  // Datos básicos
+  nombre        String
+  apellido      String
+  nombreCompleto String
+  genero        String
+  
+  // Nacimiento y origen
+  fechaNacimiento DateTime
+  edad           Int
+  lugarNacimiento String
+  nacionalidad    String
+  
+  // Biografía y personalidad
+  biografia      String    @db.Text
+  resumenBreve   String
+  rasgos         Json      // Array de rasgos de personalidad
+  ocupacion      String
+  
+  // Apariencia
+  fotoPerfil     String?   // URL de la foto principal
+  descripcionFisica String?
+  
+  // Metadatos
+  semilla        String    @unique // Para reproducibilidad
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Relaciones
+  diarios        Diario[]
+  documentos     Documento[]
+  relaciones     RelacionPersona[]
+  memorias       Memoria[]
+}
+
+model Diario {
+  id          String   @id @default(cuid())
+  personaId   String
+  fecha       DateTime
+  contenido   String   @db.Text
+  mood        String   // feliz, triste, reflexivo, ansioso, etc
+  temas       String[] // array de temas tocados
+  importante  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  persona     Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+}
+
+model Documento {
+  id          String   @id @default(cuid())
+  personaId   String
+  tipo        String   // carta, foto, certificado, nota, etc
+  titulo      String
+  contenido   String?  @db.Text
+  urlArchivo  String?
+  fecha       DateTime
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  
+  persona     Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+}
+
+model RelacionPersona {
+  id              String   @id @default(cuid())
+  personaId       String
+  nombreRelacion  String   // "María García (madre)"
+  tipoRelacion    String   // madre, padre, hermano, amigo, pareja, etc
+  descripcion     String?
+  
+  persona         Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+}
+
+model Memoria {
+  id          String   @id @default(cuid())
+  personaId   String
+  edad        Int      // edad cuando ocurrió
+  tipo        String   // trauma, alegria, logro, perdida
+  titulo      String
+  descripcion String   @db.Text
+  impacto     Int      // 1-10 qué tanto definió a la persona
+  
+  persona     Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+}
